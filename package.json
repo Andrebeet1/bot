@@ -1,15 +1,14 @@
 {
   "name": "tikearnbot",
   "version": "1.0.0",
-  "description": "Bot Telegram pour gagner de l'argent via TikTok",
   "type": "module",
-  "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "lowdb": "^6.0.1",
-    "nanoid": "^4.0.0",
+    "express": "^4.18.2",
+    "lowdb": "^5.0.4",
+    "nanoid": "^4.0.2",
     "node-telegram-bot-api": "^0.61.0"
   }
 }
