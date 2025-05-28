@@ -3,13 +3,25 @@ import TelegramBot from 'node-telegram-bot-api';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
 import { nanoid } from 'nanoid';
+import dotenv from 'dotenv';
+
+dotenv.config(); // Charge les variables d'environnement
 
 const TOKEN = process.env.BOT_TOKEN;
 const URL = process.env.RENDER_EXTERNAL_URL;
 
-const bot = new TelegramBot(TOKEN); // ❌ Pas de { webHook: true }
-bot.setWebHook(`${URL}/bot${TOKEN}`);
+if (!TOKEN || !URL) {
+  console.error("❌ BOT_TOKEN ou RENDER_EXTERNAL_URL manquant dans .env");
+  process.exit(1);
+}
 
+// Active le mode Webhook
+const bot = new TelegramBot(TOKEN, { webHook: true });
+
+// Enregistre le webhook
+await bot.setWebHook(`${URL}/bot${TOKEN}`);
+
+// Initialisation de la base de données JSON
 const adapter = new JSONFile('db.json');
 const db = new Low(adapter, { users: [], taches: [], paiements: [] });
 
@@ -17,22 +29,28 @@ await db.read();
 db.data ||= { users: [], taches: [], paiements: [] };
 await db.write();
 
+// Initialisation serveur Express
 const app = express();
 app.use(express.json());
 
-// Middleware facultatif pour debug
+// Middleware pour logs des requêtes
 app.use((req, res, next) => {
   console.log(`[${req.method}] ${req.url}`);
   next();
 });
 
-// Webhook handler
+// ✅ Route d'accueil (évite "Cannot GET /")
+app.get('/', (req, res) => {
+  res.send('🤖 Bienvenue sur l\'API TikEarnBot !');
+});
+
+// Route du webhook Telegram
 app.post(`/bot${TOKEN}`, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
 
-// === Fonctions utilitaires ===
+// === Fonctions ===
 async function initUser(chatId) {
   await db.read();
   const user = db.data.users.find(u => u.chatId === chatId);
@@ -42,7 +60,7 @@ async function initUser(chatId) {
   }
 }
 
-// === Commandes ===
+// === Commandes Telegram ===
 bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   const parrainCode = match[1];
@@ -121,7 +139,7 @@ bot.onText(/\/moncode/, async (msg) => {
   bot.sendMessage(chatId, `🔗 Ton code de parrainage : *${user.id}*\nPartage ce lien :\nhttps://t.me/TikEarnBot?start=${user.id}`, { parse_mode: "Markdown" });
 });
 
-// Démarrage serveur Express
+// Démarrage du serveur
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Serveur Express démarré sur le port ${PORT}`);
