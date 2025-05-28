@@ -7,7 +7,7 @@ import { nanoid } from 'nanoid';
 const TOKEN = process.env.BOT_TOKEN;
 const URL = process.env.RENDER_EXTERNAL_URL;
 
-const bot = new TelegramBot(TOKEN, { webHook: { port: process.env.PORT } });
+const bot = new TelegramBot(TOKEN, { webHook: true });
 bot.setWebHook(`${URL}/bot${TOKEN}`);
 
 const adapter = new JSONFile('db.json');
@@ -19,6 +19,12 @@ await db.write();
 
 const app = express();
 app.use(express.json());
+
+// Middleware facultatif pour debug
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.url}`);
+  next();
+});
 
 app.post(`/bot${TOKEN}`, (req, res) => {
   bot.processUpdate(req.body);
@@ -114,6 +120,8 @@ bot.onText(/\/moncode/, async (msg) => {
   bot.sendMessage(chatId, `🔗 Ton code de parrainage : *${user.id}*\nPartage ce lien :\nhttps://t.me/TikEarnBot?start=${user.id}`, { parse_mode: "Markdown" });
 });
 
-app.listen(process.env.PORT, () => {
-  console.log("Serveur Express démarré !");
+// Démarrage du serveur Express
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Serveur Express démarré sur le port ${PORT}`);
 });
