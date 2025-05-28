@@ -4,7 +4,8 @@ import { JSONFile } from 'lowdb/node';
 import { nanoid } from 'nanoid';
 
 // === CONFIGURATION ===
-const token = '7717911398:AAH648OUh-J2wZ9W0-dxqPEVxxKvmdd-9Rw'; // ⚠️ Ne partage jamais ton token en public !
+
+const token = process.env.BOT_TOKEN;// ⚠️ Ne partage jamais ton token en public !
 const bot = new TelegramBot(token, { polling: true });
 
 // === BASE DE DONNÉES ===
